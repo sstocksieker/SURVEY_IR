@@ -86,64 +86,78 @@ The final dataset contains $n$ samples of the form:
 ```
 
 
+
+
+
+
+
 ### Imbalance level
-Le niveau de déséquilibre dans l'échantillon d'apprentissage est géré par un train-test splitting controlé par un niveau de déséquilibre (imbalance force). 
-This routine constructs training and testing sets from a dataset while allowing fine control over the **imbalance level** in the training set via importance weighting.
+The level of imbalance in the training sample is managed by a train-test splitting controlled by an imbalance force.
+This procedure creates **train/test subsets** from a dataset while allowing **imbalance control** in the training subset through **importance weighting** based on the target variable.
+
+---
 
 #### **1. Parameters**
 
-* $\texttt{data}$: full dataset, including target and features
-* $\texttt{test-size} \in (0, 1)$: proportion of observations allocated to the test set
-* $\texttt{train-size} \in (0, 1)$: proportion of data to sample in the training set (optional)
-* $\texttt{w-test}$: optional probability distribution for sampling the test set
-* $\texttt{imbForce} \geq 0$: intensity of imbalance weighting in training set (higher = stronger focus on rare values)
-* $\texttt{np-seed}$: random seed for reproducibility
+* `data`: Input dataset, including both the target and features
+* `test-size` ∈ (0, 1): Proportion of the dataset allocated to the test set
+* `train-size` ∈ (0, 1): Proportion allocated to the training subset (optional)
+* `w-test`: Sampling distribution for the test set (default: uniform)
+* `imbForce` ≥ 0: Controls how much importance is given to rare values in the training set
+* `np-seed`: Seed for reproducibility
+
+---
 
 #### **2. Test Set Sampling**
 
-Let $n$ be the total number of observations. Define:
+Let *n* be the number of observations. Define:
 
-```math
-n_{\text{test}} = \texttt{round}(n \times \texttt{test-size})
-```
+> *n<sub>test</sub>* = round(*n* × `test-size`)
 
-Then, sample $n_{\text{test}}$ indices using the distribution $w_{\text{test}}$ (uniform by default):
+Then draw *n<sub>test</sub>* indices from the dataset using the sampling weights *w<sub>test</sub>*:
 
-```math
-\text{Test indices } \sim \text{Multinomial}(n_{\text{test}}, w_{\text{test}})
-```
+> Test indices ∼ Multinomial(*n<sub>test</sub>*, *w<sub>test</sub>*)
+
+The test set is then formed from the selected indices, and the remaining data is assigned to the training pool.
+
+---
 
 #### **3. Training Set Sampling (Optional)**
 
-If `train_size` is specified, the training data can be sampled in two different ways:
+If `train-size` is provided, two training subsets are built:
 
-* **Imbalanced Training**: Sampling using weights that emphasize rare values
+##### • (a) Rebalanced Training Set (`X-train`)
 
-  Let $w_{\text{imb}}$ be the imbalance-aware sampling weights, computed using a relevance function:
+To emphasize rare values, a **relevance-based sampling distribution** is computed via the `IR_weighting` function:
 
-  ```math
-  w_{\text{imb}} = \text{IR-weighting}(Y; \alpha = \texttt{imbForce})
-  ```
+> **IR Weight Function:**
+> For a target value *y*, the weight is defined as:
+>
+> $w(y) = \frac{1}{\hat{f}(y)^{\alpha}} \Big/ \sum_{i=1}^{n} \frac{1}{\hat{f}(y_i)^{\alpha}}$
+>
+> where $\hat{f}(y)$ is the kernel density estimate (KDE) of the target variable, and $\alpha$ controls the strength of emphasis on rare values.
 
-  Then sample $n_{\text{train}} = \texttt{round}(n \times \texttt{train-size})$ points:
+Then, the training sample is drawn from this relevance-weighted distribution:
 
-  ```math
-  \text{X-imb indices } \sim \text{Multinomial}(n_{\text{train}}, w_{\text{imb}})
-  ```
+> Train indices ∼ Multinomial(*n<sub>train</sub>*, *w<sub>imb</sub>*)
 
-* **Balanced Training (Control)**: Sample the same size using the original test weights $w_{\text{test}}$ (to simulate no imbalance focus):
+##### • (b) Baseline Balanced Training Set (`X-bal`)
 
-  ```math
-  \text{X-bal indices } \sim \text{Multinomial}(n_{\text{train}}, w_{\text{test}})
-  ```
+A second sample of equal size is drawn from the uniform weights (same as `w-test`):
+
+> Train indices ∼ Multinomial(*n<sub>train</sub>*, *w<sub>test</sub>*)
+
+---
 
 #### **4. Output**
 
-The function returns a dictionary with:
+The function returns the following objects:
 
-* `X_train`: imbalance-focused training set
-* `X_test`: test set
-* `X_bal`: baseline (balanced) training set
+* `X-train`: Training set sampled using relevance-weighted distribution
+* `X-test`: Randomly sampled test set
+* `X-bal`: Baseline training set sampled using uniform distribution
+
+
 
 
 
