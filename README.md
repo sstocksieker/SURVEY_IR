@@ -1,4 +1,4 @@
-This repository presents the illustrations in the paper "A Comprehensive Survey on Imbalanced Regression: Definitions, Solutions, and Future Directions".
+This repository presents the illustrations in the paper "A Comprehensive Survey on Imbalanced Regression: Definitions, Solutions, and Future Directions". The notebook used to obtain the results in the paper is made available and the protocol is explained below.
 
 
 ## Experimental Protocol
